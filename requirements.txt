@@ -1,0 +1,19 @@
+##use - python 3.12.4 while creating conda environment
+langchain
+streamlit
+langchain_groq
+langchain_community
+python-dotenv==1.0.0
+google-generativeai
+pypdf
+faiss-cpu
+streamlit
+PyPDF2
+Pillow
+langchain
+openai
+transformers
+groq # Replace with the correct version if available
+tiktoken
+sentence-transformers
+# groq-api-client
