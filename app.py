@@ -2,11 +2,12 @@ import os
 import PyPDF2
 import streamlit as st
 from io import StringIO
-from langchain.vectorstores import FAISS
+# from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain.retrievers import SVMRetriever
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
+# from langchain.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv 
 from groq import Groq  # Import Groq
 import streamlit as st
@@ -175,7 +176,7 @@ def load_vectorstore():
 # retriever_type = st.selectbox("Select retriever type", ["SIMILARITY SEARCH", "SUPPORT VECTOR MACHINES"])
 # embedding_option = st.selectbox("Select embedding option", ["OpenAI Embeddings"])
 
-models = ["llama-3.1-70b-versatile"]
+models = ["llama-3.1-70b-versatile" , "llama-3.1-8b-instant"]
 selected_model = st.selectbox("Select model for chat completion", models)
 
 
@@ -200,6 +201,8 @@ if "vector_store" not in st.session_state :
 # vector_store_path = download_folder('congpt' , 'vector-store/2024-10-16' ,'faiss_tmp' )
 # vector_store = FAISS.load_local(vector_store_path , embeddings, allow_dangerous_deserialization=True)
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
+    if user_query :
+        st.write(f"QUESTION : {user_query}")
     # Retrieve relevant information
     # result = retriever.get_relevant_documents(user_query)
     # result = retriever.invoke(user_query , k = 3)
