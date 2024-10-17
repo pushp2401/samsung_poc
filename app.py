@@ -10,7 +10,7 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv 
 from groq import Groq  # Import Groq
 import streamlit as st
-from st_files_connection import FilesConnection
+# from st_files_connection import FilesConnection
 import boto3
 import tempfile
 import shutil
