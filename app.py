@@ -20,9 +20,9 @@ load_dotenv()
 
 # Initialize Groq client
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
 # Streamlit page configuration
 st.set_page_config(page_title="Document Processing with Groq", page_icon="📄")
+st.title(":red[KCS] knowledge base query tool")
 
 @st.cache_data
 def load_docs(files):
