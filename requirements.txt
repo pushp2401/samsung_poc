@@ -16,5 +16,6 @@ transformers
 groq # Replace with the correct version if available
 tiktoken
 sentence-transformers
+boto3
 # groq-api-client
 # st-files-connection==0.1.0
