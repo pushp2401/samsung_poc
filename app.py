@@ -68,7 +68,9 @@ def get_groq_response(user_query, context, model):
     messages = [
         {
             "role": "user",
-            "content": f"As a helpful assistant, answer the user's question if it's in the context. CONTEXT: {context} USER QUERY: {user_query}"
+            # "content": f"As a helpful assistant, answer the user's question if it's in the context. CONTEXT: {context} USER QUERY: {user_query}" 
+            "content": f"You are an intelligent and helpful construction assistant,providing information on civil engineering, construction practices, safety regulations etc. Answer the user's question based on the given context. CONTEXT: {context} USER QUERY: {user_query}" 
+
         }
     ]
 
@@ -80,51 +82,6 @@ def get_groq_response(user_query, context, model):
     
     return chat_completion.choices[0].message.content
 
-# def download_vector_store(bucket_name, remote_folder ):
-#     """
-#     Download a folder from S3 to local storage.
-    
-#     :param bucket_name: Name of the S3 bucket
-#     :param remote_folder: Path of the folder in S3
-#     :param local_folder: Local destination folder
-#     """
-#     # tempfile.mkdtmp(
-#     import pdb; pdb.set_trace()
-#     local_folder = tempfile.mkdtemp()
-#     s3_client = boto3.client('s3' )
-    
-#     # Ensure the local folder exists
-#     os.makedirs(local_folder, exist_ok=True)
-    
-#     # Get the contents of the remote folder
-#     paginator = s3_client.get_paginator('list_objects_v2')
-#     page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=remote_folder)
-    
-#     for page in page_iterator:
-#         for obj in page['Contents']:
-#             key = obj['Key']
-            
-#             # Skip directories
-#             if '/' in key[len(remote_folder):]:
-#                 continue
-            
-#             # Construct full local path
-#             local_path = os.path.join(local_folder, key[len(remote_folder):])
-#             print("path : "  , local_path)
-            
-#             # Create directory structure if needed
-#             os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            
-#             try:
-#                 s3_client.download_file(bucket_name, key, local_path)
-                
-#                 # Print progress
-#                 print(f"Downloaded: {key}")
-#             except ClientError as e:
-#                 print(f"Error downloading {key}: {str(e)}")
-#     vector_store = FAISS.load_local(local_folder , embeddings, allow_dangerous_deserialization=True) 
-#     shutil.rmtree(local_folder)
-#     return vector_store
     
 from langchain_community.vectorstores import FAISS
 import tempfile
@@ -176,7 +133,7 @@ def load_vectorstore():
 # retriever_type = st.selectbox("Select retriever type", ["SIMILARITY SEARCH", "SUPPORT VECTOR MACHINES"])
 # embedding_option = st.selectbox("Select embedding option", ["OpenAI Embeddings"])
 
-models = ["llama-3.1-70b-versatile" , "llama-3.1-8b-instant"]
+models = ["llama-3.1-70b-versatile" , "llama-3.1-8b-instant" , "gemma2-9b-it"]
 selected_model = st.selectbox("Select model for chat completion", models)
 
 
@@ -204,8 +161,6 @@ if user_query := st.chat_input("Ask a question about KCS documents:") :
     if user_query :
         st.write(f"QUESTION : {user_query}")
     # Retrieve relevant information
-    # result = retriever.get_relevant_documents(user_query)
-    # result = retriever.invoke(user_query , k = 3)
     result = vector_store.similarity_search(user_query)
     matched_info = ' '.join([doc.page_content for doc in result])
     context = f"Information: {matched_info}"
