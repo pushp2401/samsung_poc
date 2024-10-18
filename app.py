@@ -158,10 +158,32 @@ if "vector_store" not in st.session_state :
 # vector_store_path = download_folder('congpt' , 'vector-store/2024-10-16' ,'faiss_tmp' )
 # vector_store = FAISS.load_local(vector_store_path , embeddings, allow_dangerous_deserialization=True)
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
+    import pdb; pdb.set_trace()
     if user_query :
         st.write(f"QUESTION : {user_query}")
     # Retrieve relevant information
     result = vector_store.similarity_search(user_query)
+    with st.sidebar : 
+        with st.container() :
+            st.header("Generated answer references" , divider = "red")
+            with st.expander(str(result[0].metadata["filename"])) : 
+                st.write(str(result[0].page_content)) 
+            with st.expander(str(result[1].metadata["filename"])) : 
+                st.write(str(result[1].page_content)) 
+            with st.expander(str(result[2].metadata["filename"])) : 
+                st.write(str(result[2].page_content)) 
+            with st.expander(str(result[3].metadata["filename"])) : 
+                st.write(str(result[3].page_content)) 
+                
+    # left , middle1 , middle2 , right = st.columns(4 , vertical_alignment = "bottom")
+    # with st.expander("source1") : 
+    #     left.text_input(str(result[0].metadata))
+    # with st.expander("source1") : 
+    #     middle1.text_input(str(result[1].metadata))
+    # with st.expander("source1") : 
+    #     middle2.text_input(str(result[2].metadata))
+    # with st.expander("source1") : 
+    #     right.text_input(str(result[3].metadata))
     matched_info = ' '.join([doc.page_content for doc in result])
     context = f"Information: {matched_info}"
     
