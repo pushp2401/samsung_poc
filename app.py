@@ -158,7 +158,6 @@ if "vector_store" not in st.session_state :
 # vector_store_path = download_folder('congpt' , 'vector-store/2024-10-16' ,'faiss_tmp' )
 # vector_store = FAISS.load_local(vector_store_path , embeddings, allow_dangerous_deserialization=True)
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
-    import pdb; pdb.set_trace()
     if user_query :
         st.write(f"QUESTION : {user_query}")
     # Retrieve relevant information
