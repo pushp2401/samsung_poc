@@ -15,6 +15,10 @@ import streamlit as st
 import boto3
 import tempfile
 import shutil
+import re
+from sentence_transformers import SentenceTransformer, util 
+import time
+
 load_dotenv()  
 
 
@@ -157,37 +161,139 @@ if "vector_store" not in st.session_state :
 # vector_store_path = 'vector-store/2024-10-16'
 # vector_store_path = download_folder('congpt' , 'vector-store/2024-10-16' ,'faiss_tmp' )
 # vector_store = FAISS.load_local(vector_store_path , embeddings, allow_dangerous_deserialization=True)
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+
+def sen_sim_calc(s1 , s2) :
+
+    #Compute embedding for both lists
+    embedding_1= model.encode(s1 , convert_to_tensor=False)
+    embedding_2 = model.encode(s2 , convert_to_tensor=False)
+
+    score = util.pytorch_cos_sim(embedding_1, embedding_2) 
+    return score
+
+def split_into_sentences(paragraph):
+    # Regular expression pattern
+    sentence_endings = r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s'
+    sentences = re.split(sentence_endings, paragraph)    
+    return sentences
+def update_string(new_value):
+    st.session_state.response = new_value
+    st.write(st.session_state.response)
+
+def highlight_similar_sentences(resp, chunk , highlight_color):
+    # print("spliiting text")
+    resp_lines = split_into_sentences(resp)
+    chunk_lines = split_into_sentences(chunk)
+    # print("splitting done")
+    resp_output = ""
+    chunk_output = ""
+    
+    for line1 in resp_lines:
+        for line2 in chunk_lines:
+            # ratio = SequenceMatcher(None, line1, line2).ratio()
+            # print("calculating score")
+            ratio = sen_sim_calc(line1 , line2)
+            # print("score calculation done") 
+            # print("-----------------------------")
+            if ratio >= 0.85:  # Adjust this threshold as needed
+                # code for highlight paragraphs at the same time 
+                resp_output += f"<span style='background-color:{highlight_color};'>{line1}</span><br>"
+                chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br>"
+                #-------------------------------------------------
+                # resp_output += f"{line1} &#9731" 
+                # chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br>"
+        else:
+            resp_output += f"{line1}<br>"
+            chunk_output += f"{line2}<br>"
+    
+    return resp_output , chunk_output
+
+
+# def highlight_paragraphs(text):
+#     # Split the text into paragraphs
+#     paragraphs = text.split('\n\n')
+    
+#     # Create HTML content with red symbols at the end of each line
+#     html_content = ''
+#     for paragraph in paragraphs:
+#         lines = paragraph.split('\n')
+#         for i, line in enumerate(lines):
+#             html_content += f'<span class="line">{line} •</span><br>'
+#         html_content += '<br>'
+    
+#     # Add custom CSS for styling and hover effect
+#     css = """
+#     <style>
+#     .container {
+#         font-family: Arial, sans-serif;
+#         max-width: 800px;
+#         margin: auto;
+#     }
+#     .line {
+#         display: block;
+#         margin-bottom: 5px;
+#         transition: background-color 0.3s ease;
+#     }
+#     .line:hover {
+#         background-color: rgba(255, 0, 0, 0.2);
+#     }
+#     </style>
+#     """
+    
+#     # Combine HTML and CSS
+#     return f'<div class="container">{css}{html_content}</div>'
+
+
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
+    # import pdb; pdb.set_trace()
     if user_query :
         st.write(f"QUESTION : {user_query}")
     # Retrieve relevant information
     result = vector_store.similarity_search(user_query)
+    matched_info = ' '.join([doc.page_content for doc in result])
+    context = f"Information: {matched_info}"
+    # if 'response' not in st.session_state : 
+        # st.session_state.response = ""
+    # st.session_state.response = get_groq_response(user_query, context, selected_model)
+
+    response = get_groq_response(user_query, context, selected_model)
+    placeholder = st.empty()
+    placeholder.write(response)
+    # with placeholder.container() : 
+    # st.write("Response:")
+    # st.write(response)  # Display response in Korean (Groq will handle it)
+
+    #### working code part ##############################
+    # resp_lines = split_into_sentences(response)
+    # cl1 , cl2 , cl3 , cl4 = split_into_sentences(result[0].page_content),split_into_sentences(result[1].page_content),split_into_sentences(result[2].page_content),split_into_sentences(result[3].page_content)
+    updated_resp = ""
     with st.sidebar : 
         with st.container() :
             st.header("Generated answer references" , divider = "red")
             with st.expander(str(result[0].metadata["filename"])) : 
-                st.write(str(result[0].page_content)) 
+                r1 ,c1 = highlight_similar_sentences(response , result[0].page_content , 'LightBlue') 
+                # st.write(str(result[0].page_content)) 
+                st.write(c1 , unsafe_allow_html = True)
+                updated_resp = updated_resp + c1 
             with st.expander(str(result[1].metadata["filename"])) : 
-                st.write(str(result[1].page_content)) 
+                r2 ,c2 = highlight_similar_sentences(response , result[1].page_content , 'LightPink') 
+                # st.write(str(result[1].page_content)) 
+                st.write(c2, unsafe_allow_html = True)
+                updated_resp = updated_resp + '\n' + c2 
             with st.expander(str(result[2].metadata["filename"])) : 
-                st.write(str(result[2].page_content)) 
+                r3 ,c3 = highlight_similar_sentences(response , result[2].page_content , 'LightSteelBlue') 
+                # st.write(str(result[2].page_content)) 
+                st.write(c3, unsafe_allow_html = True)
+                updated_resp = updated_resp + '\n' + c3
             with st.expander(str(result[3].metadata["filename"])) : 
-                st.write(str(result[3].page_content)) 
-                
-    # left , middle1 , middle2 , right = st.columns(4 , vertical_alignment = "bottom")
-    # with st.expander("source1") : 
-    #     left.text_input(str(result[0].metadata))
-    # with st.expander("source1") : 
-    #     middle1.text_input(str(result[1].metadata))
-    # with st.expander("source1") : 
-    #     middle2.text_input(str(result[2].metadata))
-    # with st.expander("source1") : 
-    #     right.text_input(str(result[3].metadata))
-    matched_info = ' '.join([doc.page_content for doc in result])
-    context = f"Information: {matched_info}"
+                r4 ,c4 = highlight_similar_sentences(response , result[3].page_content , 'Silver') 
+                # st.write(str(result[3].page_content)) 
+                st.write(c4, unsafe_allow_html = True)
+                updated_resp = updated_resp + '\n' + c4 
+    ###################################################################################  
+    # time.sleep(1) 
+    # placeholder.text_are("Response : " , "Here's a bouquet &mdash;\
+                        #   :tulip::cherry_blossom::rose::hibiscus::sunflower::blossom:")
+    placeholder.write(updated_resp , unsafe_allow_html = True)
     
-    # Generate response using Groq with the selected model
-    response = get_groq_response(user_query, context, selected_model)
-    
-    st.write("Response:")
-    st.write(response)  # Display response in Korean (Groq will handle it)
