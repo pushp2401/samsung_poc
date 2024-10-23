@@ -130,37 +130,16 @@ def load_vectorstore():
         print("No AWS credentials found.")
     except Exception as e:
         print(f"An error occurred: {e}")
-# Main app logic
-# uploaded_files = st.file_uploader("Upload your documents", type=["pdf", "txt"], accept_multiple_files=True)
-# chunk_size = st.slider("Select chunk size", 100, 2000, 1000)
-# overlap = st.slider("Select overlap size", 0, 100, 0)
-# retriever_type = st.selectbox("Select retriever type", ["SIMILARITY SEARCH", "SUPPORT VECTOR MACHINES"])
-# embedding_option = st.selectbox("Select embedding option", ["OpenAI Embeddings"])
 
 models = ["llama-3.1-70b-versatile" , "llama-3.1-8b-instant" , "gemma2-9b-it"]
 selected_model = st.selectbox("Select model for chat completion", models)
 
 
-# loaded_text = load_docs(uploaded_files)
-# st.write("Documents uploaded and processed.")
-# splits = split_texts(loaded_text, chunk_size, overlap)
-# retriever = create_retriever(embeddings, splits, retriever_type) 
-# vector_store = download_vector_store('congpt' , 'vector-store/2024-10-16') 
-# vector_store = load_vectorstore()
 if "vector_store" not in st.session_state :
     # vector_store = FAISS.load_local("/Users/pushpanjali/samsung/congpt-async-claudetools/KCSFaissVectorStore" , embeddings ,  allow_dangerous_deserialization=True)
     with st.spinner("loading vector store") : 
         vector_store = load_vectorstore()
-# retriever = vector_store.as_retriever()
-# user_query = st.chat_input("Ask a question about the uploaded documents:") 
-# vector_store = FAISS.load_local("/Users/pushpanjali/samsung/congpt-async-claudetools/KCSFaissVectorStore", embeddings, allow_dangerous_deserialization=True)
-# import boto3
 
-# s3 = boto3.client('s3')
-# bucket_name = 'congpt'
-# vector_store_path = 'vector-store/2024-10-16'
-# vector_store_path = download_folder('congpt' , 'vector-store/2024-10-16' ,'faiss_tmp' )
-# vector_store = FAISS.load_local(vector_store_path , embeddings, allow_dangerous_deserialization=True)
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def sen_sim_calc(s1 , s2) :
@@ -188,7 +167,7 @@ def highlight_similar_sentences(resp, chunk , highlight_color):
     # print("splitting done")
     resp_output = ""
     chunk_output = ""
-    
+    count = 0
     for line1 in resp_lines:
         for line2 in chunk_lines:
             # ratio = SequenceMatcher(None, line1, line2).ratio()
@@ -196,53 +175,19 @@ def highlight_similar_sentences(resp, chunk , highlight_color):
             ratio = sen_sim_calc(line1 , line2)
             # print("score calculation done") 
             # print("-----------------------------")
+            ref_index = f"[{count}]"
             if ratio >= 0.85:  # Adjust this threshold as needed
                 # code for highlight paragraphs at the same time 
-                resp_output += f"<span style='background-color:{highlight_color};'>{line1}</span><br>"
-                chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br>"
-                #-------------------------------------------------
-                # resp_output += f"{line1} &#9731" 
-                # chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br>"
+                # resp_output += f"<span style='background-color:{highlight_color};'>{line1} {ref_index}</span><br>"
+                resp_output+= f"{line1} {ref_index}"
+                chunk_output += f"<span style='background-color: {highlight_color};'>{line2} {ref_index}</span><br>"
+                count += 1
         else:
             resp_output += f"{line1}<br>"
             chunk_output += f"{line2}<br>"
     
     return resp_output , chunk_output
 
-
-# def highlight_paragraphs(text):
-#     # Split the text into paragraphs
-#     paragraphs = text.split('\n\n')
-    
-#     # Create HTML content with red symbols at the end of each line
-#     html_content = ''
-#     for paragraph in paragraphs:
-#         lines = paragraph.split('\n')
-#         for i, line in enumerate(lines):
-#             html_content += f'<span class="line">{line} •</span><br>'
-#         html_content += '<br>'
-    
-#     # Add custom CSS for styling and hover effect
-#     css = """
-#     <style>
-#     .container {
-#         font-family: Arial, sans-serif;
-#         max-width: 800px;
-#         margin: auto;
-#     }
-#     .line {
-#         display: block;
-#         margin-bottom: 5px;
-#         transition: background-color 0.3s ease;
-#     }
-#     .line:hover {
-#         background-color: rgba(255, 0, 0, 0.2);
-#     }
-#     </style>
-#     """
-    
-#     # Combine HTML and CSS
-#     return f'<div class="container">{css}{html_content}</div>'
 
 
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
@@ -295,5 +240,5 @@ if user_query := st.chat_input("Ask a question about KCS documents:") :
     # time.sleep(1) 
     # placeholder.text_are("Response : " , "Here's a bouquet &mdash;\
                         #   :tulip::cherry_blossom::rose::hibiscus::sunflower::blossom:")
-    # placeholder.write(updated_resp , unsafe_allow_html = True)
+    placeholder.write(updated_resp , unsafe_allow_html = True)
     
