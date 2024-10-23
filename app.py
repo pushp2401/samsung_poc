@@ -275,22 +275,22 @@ if user_query := st.chat_input("Ask a question about KCS documents:") :
                 r1 ,c1 = highlight_similar_sentences(response , result[0].page_content , 'LightBlue') 
                 # st.write(str(result[0].page_content)) 
                 st.write(c1 , unsafe_allow_html = True)
-                updated_resp = updated_resp + c1 
+                updated_resp = updated_resp + r1
             with st.expander(str(result[1].metadata["filename"])) : 
                 r2 ,c2 = highlight_similar_sentences(response , result[1].page_content , 'LightPink') 
                 # st.write(str(result[1].page_content)) 
                 st.write(c2, unsafe_allow_html = True)
-                updated_resp = updated_resp + '\n' + c2 
+                updated_resp = updated_resp + '\n' + r2 
             with st.expander(str(result[2].metadata["filename"])) : 
                 r3 ,c3 = highlight_similar_sentences(response , result[2].page_content , 'LightSteelBlue') 
                 # st.write(str(result[2].page_content)) 
                 st.write(c3, unsafe_allow_html = True)
-                updated_resp = updated_resp + '\n' + c3
+                updated_resp = updated_resp + '\n' + r3
             with st.expander(str(result[3].metadata["filename"])) : 
                 r4 ,c4 = highlight_similar_sentences(response , result[3].page_content , 'Silver') 
                 # st.write(str(result[3].page_content)) 
                 st.write(c4, unsafe_allow_html = True)
-                updated_resp = updated_resp + '\n' + c4 
+                updated_resp = updated_resp + '\n' + r4 
     ###################################################################################  
     # time.sleep(1) 
     # placeholder.text_are("Response : " , "Here's a bouquet &mdash;\
