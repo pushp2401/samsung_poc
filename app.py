@@ -18,8 +18,16 @@ import shutil
 import re
 from sentence_transformers import SentenceTransformer, util 
 import time
+from langchain_community.vectorstores import FAISS
+import tempfile
+from botocore.exceptions import ClientError, NoCredentialsError
+import os
+import boto3
+
 
 load_dotenv()  
+
+# count = 0
 
 
 # Initialize Groq client
@@ -27,45 +35,6 @@ client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 # Streamlit page configuration
 st.set_page_config(page_title="KCS database query with groq", page_icon="📄")
 st.title(":red[KCS] knowledge base query tool")
-
-@st.cache_data
-def load_docs(files):
-    st.info("Reading documents...")
-    all_text = ""
-    for file_path in files:
-        file_extension = os.path.splitext(file_path.name)[1]
-        if file_extension == ".pdf":
-            pdf_reader = PyPDF2.PdfReader(file_path)
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
-            all_text += text
-        elif file_extension == ".txt":
-            stringio = StringIO(file_path.getvalue().decode("utf-8"))
-            text = stringio.read()
-            all_text += text
-        else:
-            st.warning('Please provide .txt or .pdf files.', icon="⚠️")
-    return all_text
-
-@st.cache_resource
-def create_retriever(_embeddings, splits, retriever_type):
-    if retriever_type == "SIMILARITY SEARCH":
-        vectorstore = FAISS.from_texts(splits, _embeddings)
-        retriever = vectorstore.as_retriever(k=5)
-    elif retriever_type == "SUPPORT VECTOR MACHINES":
-        retriever = SVMRetriever.from_texts(splits, _embeddings)
-    return retriever
-
-@st.cache_resource
-def split_texts(text, chunk_size, overlap):
-    st.info("Splitting document...")
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap)
-    splits = text_splitter.split_text(text)
-    if not splits:
-        st.error("Failed to split document")
-        st.stop()
-    return splits
 
 def get_groq_response(user_query, context, model):
     # Create the messages for Groq completion
@@ -87,11 +56,6 @@ def get_groq_response(user_query, context, model):
     return chat_completion.choices[0].message.content
 
     
-from langchain_community.vectorstores import FAISS
-import tempfile
-from botocore.exceptions import ClientError, NoCredentialsError
-import os
-import boto3
 def load_vectorstore():
     s3 = boto3.client('s3')
     bucket_name = os.getenv("AWS_BUCKET_NAME")
@@ -135,18 +99,18 @@ models = ["llama-3.1-70b-versatile" , "llama-3.1-8b-instant" , "gemma2-9b-it"]
 selected_model = st.selectbox("Select model for chat completion", models)
 
 
-if "vector_store" not in st.session_state :
-    # vector_store = FAISS.load_local("/Users/pushpanjali/samsung/congpt-async-claudetools/KCSFaissVectorStore" , embeddings ,  allow_dangerous_deserialization=True)
-    with st.spinner("loading vector store") : 
-        vector_store = load_vectorstore()
+# if "vector_store" not in st.session_state :
+#     # vector_store = FAISS.load_local("/Users/pushpanjali/samsung/congpt-async-claudetools/KCSFaissVectorStore" , embeddings ,  allow_dangerous_deserialization=True)
+#     with st.spinner("loading vector store") : 
+#         vector_store = load_vectorstore()
 
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def sen_sim_calc(s1 , s2) :
 
     #Compute embedding for both lists
-    embedding_1= model.encode(s1 , convert_to_tensor=False)
-    embedding_2 = model.encode(s2 , convert_to_tensor=False)
+    embedding_1= model.encode(s1 , convert_to_tensor=True)
+    embedding_2 = model.encode(s2 , convert_to_tensor=True)
 
     score = util.pytorch_cos_sim(embedding_1, embedding_2) 
     return score
@@ -160,85 +124,185 @@ def update_string(new_value):
     st.session_state.response = new_value
     st.write(st.session_state.response)
 
-def highlight_similar_sentences(resp, chunk , highlight_color):
-    # print("spliiting text")
+# def highlight_similar_sentences(resp, chunk , highlight_color , count):
+#     # import pdb; pdb.set_trace()
+#     # print("spliiting text")
+#     resp_lines = split_into_sentences(resp)
+#     chunk_lines = split_into_sentences(chunk)
+#     # print("splitting done")
+#     resp_output = ""
+#     chunk_output = ""
+#     for line1 in resp_lines:
+#         flag = True
+#         for line2 in chunk_lines:
+#             # ratio = SequenceMatcher(None, line1, line2).ratio()
+#             # print("calculating score")
+#             ratio = sen_sim_calc(line1 , line2)
+#             # print("score calculation done") 
+#             # print("-----------------------------")
+#             ref_index = f"[{count}]"
+#             if ratio >= 0.85:  # Adjust this threshold as needed
+#                 # code for highlight paragraphs at the same time 
+#                 # resp_output += f"<span style='background-color:{highlight_color};'>{line1} {ref_index}</span><br>"
+#                 # import pdb; pdb.set_trace()
+#                 resp_output+= f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
+#                 chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
+#                 count += 1
+#             else : 
+#                 chunk_output += f"{line2}<br>" 
+#             if ratio < 0.85  :
+#                 if flag :
+#                     resp_output += f"{line1}<br>"
+#                     flag = False
+
+
+
+#         # else:
+#         #     chunk_output += f"{line2}<br>" 
+#         #     resp_output += f"{line1}<br>"
+
+#     return resp_output , chunk_output , count
+
+# def highlight_similar_sentences(resp , chunk , highlight_color , count) :
+#     # import pdb; pdb.set_trace()
+#     resp_lines = split_into_sentences(resp)
+#     chunk_lines = split_into_sentences(chunk)
+#     resp_output = ""
+#     chunk_output = ""
+#     # import pdb; pdb.set_trace()
+#     for line1 in resp_lines:
+#         for line2 in chunk_lines :
+#             sim = sen_sim_calc(line1 , line2)
+#             ref_index = f"[{count}]" 
+#             if sim >= 0.87 : 
+#                 import pdb; pdb.set_trace()
+#                 if line1 not in resp_output : 
+#                     resp_output+= f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
+#                 if line2 not in chunk_output : 
+#                     # chunk_output+= f"{line2} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
+#                     #   chunk_output = chunk_output[  : chunk_line2_start_index  ] + f"<span style='background-color: {highlight_color};'>" + line2 + f"</span><br> <span style='background-color: red;'>{ref_index}</span><br>" + chunk_output[chunk_line2_end_index : ]
+#                     chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
+                
+#                 if line1 in resp_output : 
+#                     end_index_line1 = resp_output.index(line1) + len(line1) - 1
+#                     resp_output = resp_output[ : end_index_line1 + 1] + f"<span style='background-color:{highlight_color};color:red'>{ref_index}</span>" + resp_output [end_index_line1+1 : ]
+#                 if line2 in chunk_output  : 
+#                     # if f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>" in chunk_output : 
+#                     if (f"<span style='background-color: {highlight_color};'>{line2}</span><br>" in chunk_output) and (f"<span style='background-color: red;'>{ref_index}</span><br>" in chunk_output) :
+#                         pass
+#                     elif (f"<span style='background-color: {highlight_color};'>{line2}</span><br>" in chunk_output) and (f"<span style='background-color: red;'>{ref_index}</span><br>" not in chunk_output) :
+#                         end_index_line2 = chunk_output.index(line2) + len(line2) - 1 
+#                         chunk_output = chunk_output[ : end_index_line2 + 1] + f"<span style='background-color: red;'>{ref_index}</span>" + chunk_output [end_index_line2 + 1 : ]
+#                     else :
+#                         start_index_line2 = chunk_output.index(line2) 
+#                         end_index_line2 = chunk_output.index(line2) + len(line2) - 1 
+#                         chunk_output = chunk_output[ : start_index_line2] + f" <span style='background-color: {highlight_color};'>" + chunk_output[start_index_line2 : end_index_line2 + 1] + f"</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
+#                 count+=1
+#             else : 
+#                 if line1 in resp_output : 
+#                     pass
+#                 else : 
+#                     resp_output += f"{line1}<br>"
+#                 if line2 in chunk_output : 
+#                     pass
+#                 else : 
+#                     chunk_output += f"{line2}<br>" 
+#     return resp_output , chunk_output , count
+
+
+def highlight_similar_sentences(resp, chunk, highlight_color, count):
+
     resp_lines = split_into_sentences(resp)
     chunk_lines = split_into_sentences(chunk)
-    # print("splitting done")
-    resp_output = ""
-    chunk_output = ""
-    count = 0
+    resp_output = []
+    chunk_output = []
+
     for line1 in resp_lines:
         for line2 in chunk_lines:
-            # ratio = SequenceMatcher(None, line1, line2).ratio()
-            # print("calculating score")
-            ratio = sen_sim_calc(line1 , line2)
-            # print("score calculation done") 
-            # print("-----------------------------")
+            sim = sen_sim_calc(line1, line2)
             ref_index = f"[{count}]"
-            if ratio >= 0.85:  # Adjust this threshold as needed
-                # code for highlight paragraphs at the same time 
-                # resp_output += f"<span style='background-color:{highlight_color};'>{line1} {ref_index}</span><br>"
-                resp_output+= f"{line1} {ref_index}"
-                chunk_output += f"<span style='background-color: {highlight_color};'>{line2} {ref_index}</span><br>"
-                count += 1
-        else:
-            resp_output += f"{line1}<br>"
-            chunk_output += f"{line2}<br>"
-    
-    return resp_output , chunk_output
 
+            if sim >= 0.87:
+                count += 1
+                resp_output.append(f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>")
+                chunk_output.append(f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>")
+            else:
+                resp_output.append(f"{line1}<br>")
+                chunk_output.append(f"{line2}<br>")
+
+    return "".join(resp_output), "".join(chunk_output), count
 
 
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
     # import pdb; pdb.set_trace()
     if user_query :
-        st.write(f"QUESTION : {user_query}")
+        with st.chat_message("user") : 
+            st.write(f"QUESTION : {user_query}")
     # Retrieve relevant information
-    result = vector_store.similarity_search(user_query)
-    matched_info = ' '.join([doc.page_content for doc in result])
+    if "vector_store" not in st.session_state :
+    # vector_store = FAISS.load_local("/Users/pushpanjali/samsung/congpt-async-claudetools/KCSFaissVectorStore" , embeddings ,  allow_dangerous_deserialization=True)
+        with st.spinner("loading vector store") : 
+            st.session_state.vector_store = load_vectorstore()
+    with st.spinner("retrieving context") :
+        result = st.session_state.vector_store.similarity_search(user_query)
+
+    matched_info = ' '.join([doc.page_content for doc in result]) 
     context = f"Information: {matched_info}"
     # if 'response' not in st.session_state : 
         # st.session_state.response = ""
     # st.session_state.response = get_groq_response(user_query, context, selected_model)
 
     response = get_groq_response(user_query, context, selected_model)
+    # with st.chat_message("ai") : 
     placeholder = st.empty()
+    
     placeholder.write(response)
-    # with placeholder.container() : 
-    # st.write("Response:")
-    # st.write(response)  # Display response in Korean (Groq will handle it)
 
-    #### working code part ##############################
-    # resp_lines = split_into_sentences(response)
-    # cl1 , cl2 , cl3 , cl4 = split_into_sentences(result[0].page_content),split_into_sentences(result[1].page_content),split_into_sentences(result[2].page_content),split_into_sentences(result[3].page_content)
+    # #### working code part ##############################
     updated_resp = ""
     with st.sidebar : 
         with st.container() :
-            st.header("Generated answer references" , divider = "red")
-            with st.expander(str(result[0].metadata["filename"])) : 
-                r1 ,c1 = highlight_similar_sentences(response , result[0].page_content , 'LightBlue') 
-                # st.write(str(result[0].page_content)) 
-                st.write(c1 , unsafe_allow_html = True)
-                updated_resp = updated_resp + r1
-            with st.expander(str(result[1].metadata["filename"])) : 
-                r2 ,c2 = highlight_similar_sentences(response , result[1].page_content , 'LightBlue') 
-                # st.write(str(result[1].page_content)) 
-                st.write(c2, unsafe_allow_html = True)
-                updated_resp = updated_resp + '\n' + r2 
-            with st.expander(str(result[2].metadata["filename"])) : 
-                r3 ,c3 = highlight_similar_sentences(response , result[2].page_content , 'LightBlue') 
-                # st.write(str(result[2].page_content)) 
-                st.write(c3, unsafe_allow_html = True)
-                updated_resp = updated_resp + '\n' + r3
-            with st.expander(str(result[3].metadata["filename"])) : 
-                r4 ,c4 = highlight_similar_sentences(response , result[3].page_content , 'LightBlue') 
-                # st.write(str(result[3].page_content)) 
-                st.write(c4, unsafe_allow_html = True)
-                updated_resp = updated_resp + '\n' + r4 
+            with st.spinner("Generating references") : 
+                st.header("Generated answer references" , divider = "red")
+                # full_context = " ####$#### ".join([doc.page_content for doc in result])
+                # full_context = "----chunk1------" + "\n" + result[0].page_content + "\n" + "----chunk2------" + "\n" + result[1].page_content + "\n" +  "----chunk3------" + "\n" + result[2].page_content + "\n" + "----chunk4------" + "\n" + result[3].page_content
+                # r , c , ref_count = highlight_similar_sentences(response , full_context , 'LightBlue' , 0)
+                # st.write(c , unsafe_allow_html = True) 
+
+    # placeholder.write(r , unsafe_allow_html = True) 
+                # exit()
+                
+                with st.expander(str(result[0].metadata["filename"])) : 
+                    # import pdb; pdb.set_trace() 
+                    r1 ,c1 , ref_count1 = highlight_similar_sentences(response , result[0].page_content , 'LightBlue' , 0) 
+                    # st.write(str(result[0].page_content)) 
+                    st.write(c1 , unsafe_allow_html = True) 
+                    updated_resp = updated_resp + r1
+                with st.expander(str(result[1].metadata["filename"])) : 
+                    # import pdb; pdb.set_trace() 
+                    r2 ,c2 , ref_count2 = highlight_similar_sentences(r1 , result[1].page_content , 'LightBlue' , ref_count1) 
+                    # st.write(str(result[1].page_content)) 
+                    st.write(c2, unsafe_allow_html = True)
+                    updated_resp = updated_resp + '\n' + r2 
+                with st.expander(str(result[2].metadata["filename"])) : 
+                    # import pdb; pdb.set_trace() 
+                    r3 ,c3 , ref_count3 = highlight_similar_sentences(r2 , result[2].page_content , 'LightBlue' , ref_count2) 
+                    # st.write(str(result[2].page_content)) 
+                    st.write(c3, unsafe_allow_html = True)
+                    updated_resp = updated_resp + '\n' + r3
+                with st.expander(str(result[3].metadata["filename"])) : 
+                    # import pdb; pdb.set_trace() 
+                    r4 ,c4  , ref_count4 = highlight_similar_sentences(r3 , result[3].page_content , 'LightBlue' , ref_count3) 
+                    # st.write(str(result[3].page_content)) 
+                    st.write(c4, unsafe_allow_html = True)
+                    # updated_resp = updated_resp + '\n' + r4 
     ###################################################################################  
     # time.sleep(1) 
     # placeholder.text_are("Response : " , "Here's a bouquet &mdash;\
                         #   :tulip::cherry_blossom::rose::hibiscus::sunflower::blossom:")
-    placeholder.write(updated_resp , unsafe_allow_html = True)
+    # placeholder.write(updated_resp , unsafe_allow_html = True)
+    placeholder.write(r4 , unsafe_allow_html = True) 
+
+
+    
     
