@@ -163,74 +163,74 @@ def update_string(new_value):
 
 #     return resp_output , chunk_output , count
 
-# def highlight_similar_sentences(resp , chunk , highlight_color , count) :
-#     # import pdb; pdb.set_trace()
-#     resp_lines = split_into_sentences(resp)
-#     chunk_lines = split_into_sentences(chunk)
-#     resp_output = ""
-#     chunk_output = ""
-#     # import pdb; pdb.set_trace()
-#     for line1 in resp_lines:
-#         for line2 in chunk_lines :
-#             sim = sen_sim_calc(line1 , line2)
-#             ref_index = f"[{count}]" 
-#             if sim >= 0.87 : 
-#                 import pdb; pdb.set_trace()
-#                 if line1 not in resp_output : 
-#                     resp_output+= f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
-#                 if line2 not in chunk_output : 
-#                     # chunk_output+= f"{line2} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
-#                     #   chunk_output = chunk_output[  : chunk_line2_start_index  ] + f"<span style='background-color: {highlight_color};'>" + line2 + f"</span><br> <span style='background-color: red;'>{ref_index}</span><br>" + chunk_output[chunk_line2_end_index : ]
-#                     chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
-                
-#                 if line1 in resp_output : 
-#                     end_index_line1 = resp_output.index(line1) + len(line1) - 1
-#                     resp_output = resp_output[ : end_index_line1 + 1] + f"<span style='background-color:{highlight_color};color:red'>{ref_index}</span>" + resp_output [end_index_line1+1 : ]
-#                 if line2 in chunk_output  : 
-#                     # if f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>" in chunk_output : 
-#                     if (f"<span style='background-color: {highlight_color};'>{line2}</span><br>" in chunk_output) and (f"<span style='background-color: red;'>{ref_index}</span><br>" in chunk_output) :
-#                         pass
-#                     elif (f"<span style='background-color: {highlight_color};'>{line2}</span><br>" in chunk_output) and (f"<span style='background-color: red;'>{ref_index}</span><br>" not in chunk_output) :
-#                         end_index_line2 = chunk_output.index(line2) + len(line2) - 1 
-#                         chunk_output = chunk_output[ : end_index_line2 + 1] + f"<span style='background-color: red;'>{ref_index}</span>" + chunk_output [end_index_line2 + 1 : ]
-#                     else :
-#                         start_index_line2 = chunk_output.index(line2) 
-#                         end_index_line2 = chunk_output.index(line2) + len(line2) - 1 
-#                         chunk_output = chunk_output[ : start_index_line2] + f" <span style='background-color: {highlight_color};'>" + chunk_output[start_index_line2 : end_index_line2 + 1] + f"</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
-#                 count+=1
-#             else : 
-#                 if line1 in resp_output : 
-#                     pass
-#                 else : 
-#                     resp_output += f"{line1}<br>"
-#                 if line2 in chunk_output : 
-#                     pass
-#                 else : 
-#                     chunk_output += f"{line2}<br>" 
-#     return resp_output , chunk_output , count
-
-
-def highlight_similar_sentences(resp, chunk, highlight_color, count):
-
+def highlight_similar_sentences(resp , chunk , highlight_color , count) :
+    # import pdb; pdb.set_trace()
     resp_lines = split_into_sentences(resp)
     chunk_lines = split_into_sentences(chunk)
-    resp_output = []
-    chunk_output = []
-
+    resp_output = ""
+    chunk_output = ""
+    # import pdb; pdb.set_trace()
     for line1 in resp_lines:
-        for line2 in chunk_lines:
-            sim = sen_sim_calc(line1, line2)
-            ref_index = f"[{count}]"
+        for line2 in chunk_lines :
+            sim = sen_sim_calc(line1 , line2)
+            ref_index = f"[{count}]" 
+            if sim >= 0.87 : 
+                import pdb; pdb.set_trace()
+                if line1 not in resp_output : 
+                    resp_output+= f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
+                if line2 not in chunk_output : 
+                    # chunk_output+= f"{line2} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
+                    #   chunk_output = chunk_output[  : chunk_line2_start_index  ] + f"<span style='background-color: {highlight_color};'>" + line2 + f"</span><br> <span style='background-color: red;'>{ref_index}</span><br>" + chunk_output[chunk_line2_end_index : ]
+                    chunk_output += f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
+                
+                if line1 in resp_output : 
+                    end_index_line1 = resp_output.index(line1) + len(line1) - 1
+                    resp_output = resp_output[ : end_index_line1 + 1] + f"<span style='background-color:{highlight_color};color:red'>{ref_index}</span>" + resp_output [end_index_line1+1 : ]
+                if line2 in chunk_output  : 
+                    # if f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>" in chunk_output : 
+                    if (f"<span style='background-color: {highlight_color};'>{line2}</span><br>" in chunk_output) and (f"<span style='background-color: red;'>{ref_index}</span><br>" in chunk_output) :
+                        pass
+                    elif (f"<span style='background-color: {highlight_color};'>{line2}</span><br>" in chunk_output) and (f"<span style='background-color: red;'>{ref_index}</span><br>" not in chunk_output) :
+                        end_index_line2 = chunk_output.index(line2) + len(line2) - 1 
+                        chunk_output = chunk_output[ : end_index_line2 + 1] + f"<span style='background-color: red;'>{ref_index}</span>" + chunk_output [end_index_line2 + 1 : ]
+                    else :
+                        start_index_line2 = chunk_output.index(line2) 
+                        end_index_line2 = chunk_output.index(line2) + len(line2) - 1 
+                        chunk_output = chunk_output[ : start_index_line2] + f" <span style='background-color: {highlight_color};'>" + chunk_output[start_index_line2 : end_index_line2 + 1] + f"</span><br> <span style='background-color: red;'>{ref_index}</span><br>"
+                count+=1
+            else : 
+                if line1 in resp_output : 
+                    pass
+                else : 
+                    resp_output += f"{line1}<br>"
+                if line2 in chunk_output : 
+                    pass
+                else : 
+                    chunk_output += f"{line2}<br>" 
+    return resp_output , chunk_output , count
 
-            if sim >= 0.87:
-                count += 1
-                resp_output.append(f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>")
-                chunk_output.append(f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>")
-            else:
-                resp_output.append(f"{line1}<br>")
-                chunk_output.append(f"{line2}<br>")
 
-    return "".join(resp_output), "".join(chunk_output), count
+# def highlight_similar_sentences(resp, chunk, highlight_color, count):
+
+#     resp_lines = split_into_sentences(resp)
+#     chunk_lines = split_into_sentences(chunk)
+#     resp_output = []
+#     chunk_output = []
+
+#     for line1 in resp_lines:
+#         for line2 in chunk_lines:
+#             sim = sen_sim_calc(line1, line2)
+#             ref_index = f"[{count}]"
+
+#             if sim >= 0.87:
+#                 count += 1
+#                 resp_output.append(f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>")
+#                 chunk_output.append(f"<span style='background-color: {highlight_color};'>{line2}</span><br> <span style='background-color: red;'>{ref_index}</span><br>")
+#             else:
+#                 resp_output.append(f"{line1}<br>")
+#                 chunk_output.append(f"{line2}<br>")
+
+#     return "".join(resp_output), "".join(chunk_output), count
 
 
 if user_query := st.chat_input("Ask a question about KCS documents:") : 
