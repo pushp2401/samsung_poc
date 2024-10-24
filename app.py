@@ -175,7 +175,7 @@ def highlight_similar_sentences(resp , chunk , highlight_color , count) :
             sim = sen_sim_calc(line1 , line2)
             ref_index = f"[{count}]" 
             if sim >= 0.87 : 
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
                 if line1 not in resp_output : 
                     resp_output+= f"{line1} <span style='background-color:{highlight_color};color:red'>{ref_index}</span><br>"
                 if line2 not in chunk_output : 
