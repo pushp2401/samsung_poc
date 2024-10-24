@@ -109,8 +109,8 @@ model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 def sen_sim_calc(s1 , s2) :
 
     #Compute embedding for both lists
-    embedding_1= model.encode(s1 , convert_to_tensor=True)
-    embedding_2 = model.encode(s2 , convert_to_tensor=True)
+    embedding_1= model.encode(s1 , convert_to_tensor=False)
+    embedding_2 = model.encode(s2 , convert_to_tensor=False)
 
     score = util.pytorch_cos_sim(embedding_1, embedding_2) 
     return score
