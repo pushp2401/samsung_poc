@@ -133,7 +133,7 @@ def highlight_similar_sentences(resp , chunk , count , org_resp) :
             #         pass
             #     else :
             #         chunk_output += f"{line2}<br>"
-            if sim >= 0.95 :
+            if sim >= 0.8 :
                 ref_index = f"[{count}]" 
                 end_index_line1 = resp_copy.index(line1) + len(line1) #1 index increase for string slicing 
                 # resp_copy = resp_copy[ : end_index_line1] + ref_index + resp_copy[  end_index_line1 : ] 
